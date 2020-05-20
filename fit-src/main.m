@@ -8,15 +8,22 @@
 %%% can take several days. Moreover, the final data structure will require
 %%% approximately 10GB of free RAM. There consider breaking the loops over
 %%% groups and over areas.
+%%% WARNING %%%
+%%% Occasionally (only <10 times for the whole fit), the evidence
+%%% optimization algorithm gets caught in a loop, caused by problem with
+%%% the package fitglmqp that I am relying on and that I did not try to
+%%% solve. If this happens, the easiest way out is to stop the fit, and
+%%% then setup the loop so to restart from the neuron it got stuck.
+%%% In most cases the problem will not appear again at the same neuron.
 
 %%% Set constants %%%
 areas = {'wS1', 'wS2', 'wM1', 'A1', 'V1', 'PPC', 'dCA1', 'mPFC', 'Striatum', 'wM2', 'ALM', 'tjM1'};
 setparamsfile = 'set_parameters.m'; % file that sets parameters
-setregressorsfile = 'set_regressors.m'; % file that defines the regressors)
+setregressorsfile = 'set_regressors.m'; % file that defines the regressors
 gitDir = '/home/samuel/GDplusMemory/'; % directory of the git repo
 dataDir = '/home/samuel/GDplusMemory/data/'; % directory where the data is
-dataName = 'GLMDataV9'; % string (name of the data file; e.g. 'GLMData_v4.mat'
-outName = 'testNew'; % name of the output file, without '.mat'
+dataName = 'GLMData'; % string (name of the data file, without .mat and without the area-specific part.
+outName = 'out'; % name of the output file, without '.mat'
 
 % create output directory if needed %
 outDir = strcat(dataDir,date,filesep);
