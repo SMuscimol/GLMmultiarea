@@ -6,6 +6,3 @@ In principle, it is sufficient to execute the file fit-src/main.m, after having 
 However, this runs the fit for all neurons, area, and mice group (Novice, Expert).
 This takes very long (presumably days) and a lot of memory. Be sure you know what you are about to start!
 It is easier to handle breaking the loop over groups and areas, and run only one combination at once.
-
-## Warning ##
-Occasionally (only <10 times for the whole fit), the evidence optimization algorithm gets caught in a loop, caused by problem with the package fitglmqp that I am relying on and that I did not try to solve. If this happens, the easiest way out is to stop the fit, and then setup the loop so to restart from the neuron it got stuck. In most cases the problem will not appear again at the same neuron.
