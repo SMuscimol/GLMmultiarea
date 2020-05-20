@@ -1,0 +1,4 @@
+[submodule "neuroGLM"]
+	path = neuroGLM
+	url = git@github.com:SMuscimol/neuroGLM.git
+	branch = master
