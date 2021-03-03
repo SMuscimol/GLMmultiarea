@@ -25,6 +25,8 @@ tRange = 0.05:0.1:3.95; % for histogram plots
 
 timeBin = 0.1; % binning of GLM fit
 
+BASEFIGDIR = '../fig/';  %% adapt to your needs
+
 %% discarded neurons
 minMI = 0.;
 nType = 'RS';
@@ -33,15 +35,15 @@ resultsDN.Neurons = filterneurons(allResultsN.Neurons, @(n) n.MI <= minMI);
 resultsDE.allNeurons = allResultsE.Neurons;
 resultsDN.allNeurons = allResultsN.Neurons;
 if strcmp(nType,'RS')
-    resultsDE.Neurons = filterneurons(resultsDE.Neurons, @(n) n.PeakToBaseline>0.34);
-    resultsDE.allNeurons = filterneurons(allResultsE.Neurons, @(n) n.PeakToBaseline>0.34);
-    resultsDN.Neurons = filterneurons(resultsDN.Neurons, @(n) n.PeakToBaseline>0.34);
-    resultsDN.allNeurons = filterneurons(allResultsN.Neurons, @(n) n.PeakToBaseline>0.34);
+    resultsDE.Neurons = filterneurons(resultsDE.Neurons, @(n) n.PeakToBaseline>thRS);
+    resultsDE.allNeurons = filterneurons(allResultsE.Neurons, @(n) n.PeakToBaseline>thRS);
+    resultsDN.Neurons = filterneurons(resultsDN.Neurons, @(n) n.PeakToBaseline>thRS);
+    resultsDN.allNeurons = filterneurons(allResultsN.Neurons, @(n) n.PeakToBaseline>thRS);
 elseif strcmp(nType,'FS')
-    resultsDE.Neurons = filterneurons(resultsDE.Neurons, @(n) n.PeakToBaseline<0.26);
-    resultsDE.allNeurons = filterneurons(allResultsE.Neurons, @(n) n.PeakToBaseline<0.26);
-    resultsDN.Neurons = filterneurons(resultsDN.Neurons, @(n) n.PeakToBaseline<0.26);
-    resultsDN.allNeurons = filterneurons(allResultsN.Neurons, @(n) n.PeakToBaseline<0.26);
+    resultsDE.Neurons = filterneurons(resultsDE.Neurons, @(n) n.PeakToBaseline<thFS);
+    resultsDE.allNeurons = filterneurons(allResultsE.Neurons, @(n) n.PeakToBaseline<thFS);
+    resultsDN.Neurons = filterneurons(resultsDN.Neurons, @(n) n.PeakToBaseline<thFS);
+    resultsDN.allNeurons = filterneurons(allResultsN.Neurons, @(n) n.PeakToBaseline<thFS);
 
 end
 ls = zeros(length(areas),2);
@@ -93,18 +95,18 @@ for nT=1:length(nTypes)
             [length(nrnsE), length(nrnsN)], false);
                 end
             elseif strcmp(nType,'RS')
-                nrnsE = filterneurons(allResultsE.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.PeakToBaseline > 0.34) * (n.(filterVar) > filterValue) ) );
+                nrnsE = filterneurons(allResultsE.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.PeakToBaseline > thRS) * (n.(filterVar) > filterValue) ) );
                 fractExpert(a,:) = getfractionmodulated(nrnsE, fitOptions, pMax);
-                nrnsN = filterneurons(allResultsN.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.PeakToBaseline > 0.34) * (n.(filterVar) > filterValue) ) );
+                nrnsN = filterneurons(allResultsN.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.PeakToBaseline > thRS) * (n.(filterVar) > filterValue) ) );
                 fractNovice(a,:) = getfractionmodulated(nrnsN, fitOptions, pMax);
                 for r=1:length(fitOptions.toRemove)
                     [~, pFracs(a,r)] = prop_test([length(nrnsE), length(nrnsN)] .* [fractExpert(a,r),fractNovice(a,r)], ...
             [length(nrnsE), length(nrnsN)], false);
                 end
             elseif strcmp(nType,'FS')
-                nrnsE = filterneurons(allResultsE.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.PeakToBaseline < 0.26) * (n.(filterVar) > filterValue) ) );
+                nrnsE = filterneurons(allResultsE.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.PeakToBaseline < thFS) * (n.(filterVar) > filterValue) ) );
                 fractExpert(a,:) = getfractionmodulated(nrnsE, fitOptions, pMax);
-                nrnsN = filterneurons(allResultsN.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.PeakToBaseline < 0.26) * (n.(filterVar) > filterValue) ) );
+                nrnsN = filterneurons(allResultsN.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.PeakToBaseline < thFS) * (n.(filterVar) > filterValue) ) );
                 fractNovice(a,:) = getfractionmodulated(nrnsN, fitOptions, pMax);
                 for r=1:length(fitOptions.toRemove)
                     [~, pFracs(a,r)] = prop_test([length(nrnsE), length(nrnsN)] .* [fractExpert(a,r),fractNovice(a,r)], ...
@@ -179,18 +181,18 @@ for nT=1:length(nTypes)
             [length(nrnsE), length(nrnsN)], false);
                 end
             elseif strcmp(nType,'RS')
-                nrnsE = filterneurons(allResultsE.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.PeakToBaseline > 0.34) * (n.(filterVar) > filterValue) ) );
+                nrnsE = filterneurons(allResultsE.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.PeakToBaseline > thRS) * (n.(filterVar) > filterValue) ) );
                 fractExpert(a,:) = getfractionmodulated(nrnsE, fitOptions, pMax);
-                nrnsN = filterneurons(allResultsN.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.PeakToBaseline > 0.34) * (n.(filterVar) > filterValue) ) );
+                nrnsN = filterneurons(allResultsN.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.PeakToBaseline > thRS) * (n.(filterVar) > filterValue) ) );
                 fractNovice(a,:) = getfractionmodulated(nrnsN, fitOptions, pMax);
                 for r=1:length(fitOptions.toRemove)
                     [~, pFracs(a,r)] = prop_test([length(nrnsE), length(nrnsN)] .* [fractExpert(a,r),fractNovice(a,r)], ...
             [length(nrnsE), length(nrnsN)], false);
                 end
             elseif strcmp(nType,'FS')
-                nrnsE = filterneurons(allResultsE.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.PeakToBaseline < 0.26) * (n.(filterVar) > filterValue) ) );
+                nrnsE = filterneurons(allResultsE.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.PeakToBaseline < thFS) * (n.(filterVar) > filterValue) ) );
                 fractExpert(a,:) = getfractionmodulated(nrnsE, fitOptions, pMax);
-                nrnsN = filterneurons(allResultsN.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.PeakToBaseline < 0.26) * (n.(filterVar) > filterValue) ) );
+                nrnsN = filterneurons(allResultsN.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.PeakToBaseline < thFS) * (n.(filterVar) > filterValue) ) );
                 fractNovice(a,:) = getfractionmodulated(nrnsN, fitOptions, pMax);
                 for r=1:length(fitOptions.toRemove)
                     [~, pFracs(a,r)] = prop_test([length(nrnsE), length(nrnsN)] .* [fractExpert(a,r),fractNovice(a,r)], ...
@@ -240,8 +242,16 @@ end
 % Hippocampus/Novice is the only diagram that will not be plotted because
 % it has only few neurons sensitive to whisker onset and venn.m does not
 % allow to plot only one diagram.
+savefigs = false;
+str1= '#fba822ff';
+str2= '#785734ff';
+str3 = '#2627f9ff';
+color1= sscanf(str1(2:end),'%2x%2x%2x',[1 3])/255;
+color2= sscanf(str2(2:end),'%2x%2x%2x',[1 3])/255;
+color3= sscanf(str3(2:end),'%2x%2x%2x',[1 3])/255;
+cs = {color1, color2, color3};
 
-filterVar = 'cvRsq';
+filterVar = 'MI';  % cvR-sq was used for the paper figure
 if strcmp(filterVar,'cvRsq')
     filterValue = 0.01;
 elseif strcmp(filterVar,'MI')
@@ -265,9 +275,9 @@ for a = 1:length(areas)
                 end
 
                 if strcmp(nt{1}, 'RS')
-                    results.Neurons = filterneurons(results.Neurons, @(n) n.PeakToBaseline > 0.34);
+                    results.Neurons = filterneurons(results.Neurons, @(n) n.PeakToBaseline > thRS);
                 elseif strcmp(nt{1}, 'FS')
-                    results.Neurons = filterneurons(results.Neurons, @(n) n.PeakToBaseline < 0.26);
+                    results.Neurons = filterneurons(results.Neurons, @(n) n.PeakToBaseline < thFS);
                 end
 
                 for r=1:length(fitOptions.toRemove)
@@ -300,7 +310,7 @@ for a = 1:length(areas)
                     ars = zeros(1,3); 
                     regrs = {'wOnset','wDelay','lickOnsetPre'};
                     for r=1:numel(regrs)
-                        ars(r) = numel(find(allPs.(regrs{r})<=0.05));
+                        ars(r) = numel(find(allPs.(regrs{r})<=pMax));
                     end
                     nzR = find(ars~=0);
                     if numel(nzR)==3
@@ -314,15 +324,24 @@ for a = 1:length(areas)
                     for r1=1:numel(nzR)
                         for r2=(r1+1):numel(nzR)
                             r=r+1;
-                            intrs(r) = numel(find((allPs.(regrs{nzR(r1)})<=0.05) .* (allPs.(regrs{nzR(r2)})<=0.05)));
+                            intrs(r) = numel(find((allPs.(regrs{nzR(r1)})<=pMax) .* (allPs.(regrs{nzR(r2)})<=pMax)));
                         end
                     end
                     if numel(nzR)==3
-                        intrs(end) = numel(find((allPs.(regrs{nzR(1)})<=0.05) .* (allPs.(regrs{nzR(2)})<=0.05) .* (allPs.(regrs{nzR(3)})<=0.05)));
+                        intrs(end) = numel(find((allPs.(regrs{nzR(1)})<=pMax) .* (allPs.(regrs{nzR(2)})<=pMax) .* (allPs.(regrs{nzR(3)})<=pMax)));
                     end
-                    ars(ars==0) = [];
-
+                    
                     disp(area)
+                    disp(strcat('removed areas:', num2str(find(ars==0))))
+                    
+                    % remove circles with zero area
+                    arstoremove = find(ars==0);
+                    ars(arstoremove) = [];
+                    % shift the colors
+                    csTmp = cs;
+                    csTmp(arstoremove) = [];
+
+                    
                     disp(strcat('totN:', num2str(totN)))
                     disp(strcat('areas:',num2str(ars)))
                     disp(strcat('inters.:',num2str(intrs)))
@@ -333,12 +352,21 @@ for a = 1:length(areas)
                     elseif numel(ars)==1
                         totArea = ars(1);
                     end
-                    [H,S] = myvenn(0.1 .* totArea, ars, intrs);
+                    [H,S] = myvenn(0.1 .* totArea, csTmp, ars, intrs);
 
                     disp(strcat('S areas',num2str(S.CircleArea)))
 
                 catch
                     warning(strcat(area,' - ', gr,' norm:',num2str(normalize),' - ', nt{1}, ' had an error'))
+                end
+
+                if savefigs
+                    figDir = strcat(BASEFIGDIR, gr);
+                    mkdir(figDir);
+                    figDir = strcat(figDir,'/',nt{1},'/');
+                    mkdir(figDir);
+                    figname = strcat('venn_',area,'_',nt{1},'filtby',filterVar);
+                    savefig(strcat(figDir,figname));
                 end
             end
         end
@@ -367,14 +395,14 @@ for nT=1:numel(nTypes)
             results.Neurons = filterneurons(allResultsN.Neurons, @(n) boolean(strcmp(n.area,area)*(n.(filterVar)>filterValue)) );
             MINovice.(area) = [results.Neurons.MI]';
         elseif strcmp(nType,'RS')
-            results.Neurons = filterneurons(allResultsE.Neurons, @(n) boolean(strcmp(n.area,area)*(n.(filterVar)>filterValue)*(n.PeakToBaseline>0.34)) );
+            results.Neurons = filterneurons(allResultsE.Neurons, @(n) boolean(strcmp(n.area,area)*(n.(filterVar)>filterValue)*(n.PeakToBaseline>thRS)) );
             MI.(area) = [results.Neurons.MI]';
-            results.Neurons = filterneurons(allResultsN.Neurons, @(n) boolean(strcmp(n.area,area)*(n.(filterVar)>filterValue)*(n.PeakToBaseline>0.34)) );
+            results.Neurons = filterneurons(allResultsN.Neurons, @(n) boolean(strcmp(n.area,area)*(n.(filterVar)>filterValue)*(n.PeakToBaseline>thRS)) );
             MINovice.(area) = [results.Neurons.MI]';
         elseif strcmp(nType, 'FS')
-            results.Neurons = filterneurons(allResultsE.Neurons, @(n) boolean(strcmp(n.area,area)*(n.(filterVar)>filterValue)*(n.PeakToBaseline<0.26)) );
+            results.Neurons = filterneurons(allResultsE.Neurons, @(n) boolean(strcmp(n.area,area)*(n.(filterVar)>filterValue)*(n.PeakToBaseline<thFS)) );
             MI.(area) = [results.Neurons.MI]';
-            results.Neurons = filterneurons(allResultsN.Neurons, @(n) boolean(strcmp(n.area,area)*(n.(filterVar)>filterValue)*(n.PeakToBaseline<0.26)) );
+            results.Neurons = filterneurons(allResultsN.Neurons, @(n) boolean(strcmp(n.area,area)*(n.(filterVar)>filterValue)*(n.PeakToBaseline<thFS)) );
             MINovice.(area) = [results.Neurons.MI]';
         end
     end
@@ -468,13 +496,13 @@ ylabel('\Delta rate')
 set(gca,'Box','off')
 % bar inset
 axes('Position',[0.8 .8 .075 .075])
-%b = bar([(n.psWaldAv.jawSpeed.data<0.05) * n.ws.jawSpeed.data; ...
-%  (n.psWaldAv.whiskSpeed.data<0.05) *n.ws.whiskSpeed.data ; ...
-%  (n.psWaldAv.tongueSpeed.data<0.05) * n.ws.tongueSpeed.data ]);
+%b = bar([(n.psWaldAv.jawSpeed.data<pMax) * n.ws.jawSpeed.data; ...
+%  (n.psWaldAv.whiskSpeed.data<pMax) *n.ws.whiskSpeed.data ; ...
+%  (n.psWaldAv.tongueSpeed.data<pMax) * n.ws.tongueSpeed.data ]);
 m = exp(n.wPlain(1))/timeBin;
-b = bar([m*(exp((n.psWaldAv.jawSpeed.data<0.05) * n.ws.jawSpeed.data) - 1), ...
-         m*(exp((n.psWaldAv.whiskSpeed.data<0.05) * n.ws.whiskSpeed.data) - 1), ...
-         m*(exp((n.psWaldAv.tongueSpeed.data<0.05) * n.ws.tongueSpeed.data) - 1)]);
+b = bar([m*(exp((n.psWaldAv.jawSpeed.data<pMax) * n.ws.jawSpeed.data) - 1), ...
+         m*(exp((n.psWaldAv.whiskSpeed.data<pMax) * n.ws.whiskSpeed.data) - 1), ...
+         m*(exp((n.psWaldAv.tongueSpeed.data<pMax) * n.ws.tongueSpeed.data) - 1)]);
 set(gca, 'box','off')
 xlabel('')
 ylabel('\beta')
@@ -545,9 +573,9 @@ elseif strcmp(group, 'Novice')
 end
 
 if strcmp(nType, 'RS')
-    results.Neurons = filterneurons(results.Neurons, @(n) n.PeakToBaseline > 0.34);
+    results.Neurons = filterneurons(results.Neurons, @(n) n.PeakToBaseline > thRS);
 elseif strcmp(nType, 'FS')
-    results.Neurons = filterneurons(results.Neurons, @(n) n.PeakToBaseline < 0.26);
+    results.Neurons = filterneurons(results.Neurons, @(n) n.PeakToBaseline < thFS);
 end
 
 % build map %

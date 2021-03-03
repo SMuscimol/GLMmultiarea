@@ -1,4 +1,4 @@
-function varargout = myvenn (normalization, varargin)
+function varargout = myvenn (normalization, colors, varargin)
 %VENN   Plot 2- or 3- circle area-proportional Venn diagram
 %
 %  venn(A, I)
@@ -213,7 +213,7 @@ function varargout = myvenn (normalization, varargin)
         if isempty(vennOpts.Parent)
             vennOpts.Parent = gca;
         end
-        hVenn = drawCirclesnorm(vennOpts.Parent, x, y, r, patchOpts.Parameters, patchOpts.Values, normalization);
+        hVenn = drawCirclesnorm(vennOpts.Parent, x, y, r, patchOpts.Parameters, patchOpts.Values, normalization, colors);
     else
         hVenn = [];
     end
@@ -404,7 +404,7 @@ function D = circPairDist (rA, rB, I, opts)
         dA = abs(I-intersectArea)/I;
     end
 end
-function hCirc = drawCirclesnorm(hParent, xc, yc, r, P, V, normalization)
+function hCirc = drawCirclesnorm(hParent, xc, yc, r, P, V, normalization, c)
 
     hAx = ancestor(hParent, 'axes');
     nextplot = get(hAx, 'NextPlot');
@@ -425,7 +425,9 @@ function hCirc = drawCirclesnorm(hParent, xc, yc, r, P, V, normalization)
     Y = r*sin(t);
     
     hCirc = zeros(1,n);
-    c = {'r', 'g', 'b'};                        %default colors
+    if isempty(c)
+        c = {'r', 'g', 'b'};                        %default colors
+    end
     fa = {0.6, 0.6, 0.6};                         %default face alpha
     tag = {'Circle1', 'Circle2', 'Circle3'}; 	%default tag
     
