@@ -1,7 +1,6 @@
 %%% Samuel P. Muscinelli, 2020 %%%
 %% load summarized data
 load('GLM.mat'); % assumes that the file is in the same directory
-
 %% definitions
 allResultsE = GLM.allResultsE;
 allResultsN = GLM.allResultsN;
@@ -360,15 +359,18 @@ for a = 1:length(areas)
                     warning(strcat(area,' - ', gr,' norm:',num2str(normalize),' - ', nt{1}, ' had an error'))
                 end
 
-                if savefigs
-                    figDir = strcat(BASEFIGDIR, gr);
-                    mkdir(figDir);
-                    figDir = strcat(figDir,'/',nt{1},'/');
-                    mkdir(figDir);
-                    figname = strcat('venn_',area,'_',nt{1},'filtby',filterVar);
-                    savefig(strcat(figDir,figname));
-                end
             end
+            
+            if savefigs
+                figDir = strcat(BASEFIGDIR, gr);
+                mkdir(figDir);
+                figDir = strcat(figDir,'/',nt{1},'/');
+                mkdir(figDir);
+                figname = strcat('venn_',area,'_',nt{1}, '_', gr, 'filtby',filterVar);
+                savefig(strcat(figDir,figname));
+                saveas(gcf,strcat(figDir, figname, '.svg'))
+            end
+            close all
         end
     end
 end
