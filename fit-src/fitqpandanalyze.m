@@ -121,12 +121,12 @@ for k=1:fitOptions.kFold
     val(k).testLL = evalGlmLikelihood(yTest, X, tmp.w, opts.baseline, opts.family, 1.);
     % LL of the constant model %
     totNspikes = sum(full(yTrain)) + sum(full(yTest));
-    totTime = ( size(full(yTrain),1) + size(full(yTrain),1) )*fitParams.mainBinsize ; 
+    totTime = ( size(full(yTrain),1) + size(full(yTest),1) ) * fitParams.mainBinsize ; 
     homRate = totNspikes/totTime * fitParams.mainBinsize;
     val(k).homRate = homRate;
     xHom = ones(size(dmTest.X,1),1);
     opts.family = 'poissexp';
-    opts.baseline = zeros(length(full(yTest)),1,class(full(yTest)));
+    opts.baseline = zeros(length(full(yTest)), 1, class(full(yTest)));
     val(k).homLL = evalGlmLikelihood(full(yTest), xHom, log(homRate), opts.baseline, opts.family, 1.);
 
     % deviance-based pseudo-R-squared %

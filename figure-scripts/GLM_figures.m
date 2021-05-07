@@ -583,13 +583,30 @@ end
 % build map %
 wNames = fieldnames(results.Neurons(1).ws);
 for wName=wNames'
-    map.(wName{1}) = zeros(numel(results.Neurons),4);
-    map.(wName{1})(:,1) = [results.Neurons.AP];
-    map.(wName{1})(:,2) = -[results.Neurons.ML];
-    % 3 or 4? leave only the used one %
-    map.(wName{1})(:,3) = arrayfun(@(n) mean(exp((n.psWaldAv.(wName{1}).data<pMax) .* n.ws.(wName{1}).data)),  results.Neurons );
-    map.(wName{1})(:,4) = arrayfun(@(n) mean((n.psWaldAv.(wName{1}).data<pMax) .* 1/timeBin .* (exp(n.ws.(wName{1}).data + n.wPlain(1))- exp(n.wPlain(1)))),  results.Neurons ); 
+    map.(wName{1}) = zeros(numel(results.Neurons),3);
+    map.(wName{1})(:,1) = [results.Neurons.AP];  % coordinate 1
+    map.(wName{1})(:,2) = -[results.Neurons.ML];  % coordinate 2
+    map.(wName{1})(:,3) = arrayfun(@(n) mean((n.psWaldAv.(wName{1}).data < pMax) .* 1 / timeBin .* (exp(n.ws.(wName{1}).data + n.wPlain(1)) - exp(n.wPlain(1)))),  results.Neurons );  % delta rate (baseline subtracted)
 end
 map.areas = {results.Neurons.area}';
+
+% average weights for the supplementary table
+
+clear avWeight;
+T = table;
+for area=areas
+    for wName=wNames'
+        avWeight.(area{1}).(wName{1}) = mean(map.(wName{1})(arrayfun(@(ar) strcmp(ar{1}, area), map.areas), 3));
+    end
+    x_T = table(struct2array(avWeight.(area{1}))');
+    x_T.Properties.VariableNames = {area{1}};
+    T = [T, x_T];  % add column
+end
+T.Properties.RowNames = wNames;
+
+filename = strcat('avWeights_', group, '.xlsx');
+writetable(T,filename)  % save table
+
+
 %%% Samuel P. Muscinelli, 2020 %%%
 % APPEND CODE TO PLOT MAPS HERE ...% 
