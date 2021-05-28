@@ -7,6 +7,7 @@ fields2keep = {'wPlain','ws','lambda','cvRsq','cvPart','yP','yTest','RsqST','MI'
 allResults.Neurons = [];
 
 % Expert
+if exist('files', 'var') == 1
 for a=1:length(areas)
     disp(a)
     load(files{a})
@@ -21,11 +22,13 @@ for a=1:length(areas)
     end
     
 end
+end
 GLM.allResultsE.Neurons = allResults.Neurons;
 GLM.allResultsE.dm = results.Sessions(end).dm;
 
 % Novice
 allResults.Neurons = [];
+if exist('filesNovice', 'var') == 1
 for a=1:length(areas)
     
     load(filesNovice{a})
@@ -40,6 +43,7 @@ for a=1:length(areas)
     end
     
 end
+end
 
 GLM.allResultsN.Neurons = allResults.Neurons;
 GLM.allResultsN.dm = results.Sessions(end).dm;
@@ -52,12 +56,16 @@ GLM.fitOptions = fitOptions;
 
 for a=1:length(areas)
     area = areas{a};
-    load(files{a})
-    GLMfulloutput.Expert.(area) = results;
-    GLMfulloutput.Expert.fitOptions = fitOptions;
-    GLMfulloutput.Expert.fitParams = fitParams;
-    load(filesNovice{a})
-    GLMfulloutput.Novice.(area) = results;
-    GLMfulloutput.Novice.fitOptions = fitOptions;
-    GLMfulloutput.Novice.fitParams = fitParams;
+    if exist('files', 'var') == 1
+    	load(files{a})
+    	GLMfulloutput.Expert.(area) = results;
+    	GLMfulloutput.Expert.fitOptions = fitOptions;
+    	GLMfulloutput.Expert.fitParams = fitParams;
+    end
+    if exist('filesNovice', 'var') == 1
+    	load(filesNovice{a})
+    	GLMfulloutput.Novice.(area) = results;
+    	GLMfulloutput.Novice.fitOptions = fitOptions;
+    	GLMfulloutput.Novice.fitParams = fitParams;
+    end
 end

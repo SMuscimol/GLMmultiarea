@@ -121,6 +121,7 @@ for k=1:fitOptions.kFold
     val(k).testLL = evalGlmLikelihood(yTest, X, tmp.w, opts.baseline, opts.family, 1.);
     % LL of the constant model %
     totNspikes = sum(full(yTrain)) + sum(full(yTest));
+    % totTime = ( size(full(yTrain),1) + size(full(yTest),1) ) * fitParams.mainBinsize ; 
     totTime = ( size(full(yTrain),1) + size(full(yTest),1) ) * fitParams.mainBinsize ; 
     homRate = totNspikes/totTime * fitParams.mainBinsize;
     val(k).homRate = homRate;
