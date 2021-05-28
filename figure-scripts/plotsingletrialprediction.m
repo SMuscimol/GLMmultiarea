@@ -21,7 +21,8 @@ elseif strcmp(tIndexType,'testSet')
     ti = gettexptfromttest(t,k,n,expt);
 end
 
-iS = sum(arrayfun(@(i) expt.binfun(expt.trial(ti).duration), 1:t-1)) + 1;
+% iS = sum(arrayfun(@(i) expt.binfun(expt.trial(ti).duration), 1:t-1)) + 1;
+iS = sum(arrayfun(@(i) expt.binfun(expt.trial(gettexptfromttest(i, k, n, expt)).duration), 1:t-1)) + 1;
 %iE = iS + expt.binfun(expt.trial(tIndex).duration) -1;
 iE = iS + expt.binfun(expt.trial(ti).duration) -1;
 
@@ -37,7 +38,7 @@ for i=1:numel(binnedSp)
     binnedSp(i) = sum(yTest(iS + (i-1)*binning:iS + i*binning - 1));
 end
 binnedSp = binnedSp./(binning*mainBinsize);
-%figure();
+% figure();
 hold on
 plot(tRangeBinned, binnedSp,'--', 'DisplayName','data','LineWidth',1,'Color',[0.,0.,0.]);
 plot(tRange, yP(iS:iE)./mainBinsize, 'DisplayName','model','LineWidth',1,'Color',[0.3,0.3,0.3]);

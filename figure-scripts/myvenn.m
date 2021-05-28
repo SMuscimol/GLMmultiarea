@@ -164,48 +164,55 @@ function varargout = myvenn (normalization, colors, varargin)
     
     %Circle Radii
     r = sqrt(A0/pi);
-    %Determine distance between first circle pair    
-    d(1) = circPairDist(r(1), r(2), I0(1), fminOpts(1));
+    if nCirc == 1
+        x(1);
+        I0 = zeros(size(4));
+    else
+        %Determine distance between first circle pair    
+        d(1) = circPairDist(r(1), r(2), I0(1), fminOpts(1));
     
-    %Position of second circle is now known
-    x(2) = d(1); 
+        %Position of second circle is now known
+        x(2) = d(1); 
     
-    %First intersection area 
-    I(1) = areaIntersect2Circ(r(1), r(2), d(1));
-    
-    if nCirc==3
-        %Pairwise distances for remaining pairs 1&3 and 2&3
-        d(2) = circPairDist(r(1), r(3), I0(2), fminOpts(1)); %d13
-        d(3) = circPairDist(r(2), r(3), I0(3), fminOpts(1)); %d23
-        %Check triangle inequality
-        srtD = sort(d);
-        if ~(srtD(end)<(srtD(1)+srtD(2)))
-            error('venn:triangleInequality', 'Triangle inequality not satisfied')
-        end
-        %Guess the initial position of the third circle using the law of cosines
-        alpha = acos( (d(1)^2 + d(2)^2 - d(3)^2)  / (2 * d(1) * d(2)) );
-        x(3) = d(2)*cos(alpha);
-        y(3) = d(2)*sin(alpha);
-        %Each pair-wise intersection fixes the distance between each pair
-        %of circles, so technically there are no degrees of freedom left in
-        %which to adjust the three-circle intersection. We can either try
-        %moving the third circle around to minimize the total error, or
-        %apply Chow-Rodgers 
-        
-        switch vennOpts.ErrMinMode
-            case 'TotalError'
-                %Minimize total intersection area error by moving the third circle
-                pos = fminsearch(@threeCircleAreaError, [x(3) y(3)], fminOpts(2));
-                x(3) = pos(1);
-                y(3) = pos(2);
-            case 'ChowRodgers'
-                %note that doChowRodgersSearch updates x and y in this
-                %workspace as a nested fcn
-                doChowRodgersSearch;
-        end
-        %Make sure everything is 'up to date' after optimization
-        update3CircleData;
-        
+        %First intersection area 
+        I(1) = areaIntersect2Circ(r(1), r(2), d(1));
+        if nCirc==3
+            %Pairwise distances for remaining pairs 1&3 and 2&3
+            d(2) = circPairDist(r(1), r(3), I0(2), fminOpts(1)); %d13
+            d(3) = circPairDist(r(2), r(3), I0(3), fminOpts(1)); %d23
+            %Check triangle inequality
+            [srtD, idxsD] = sort(d);
+            if ~(srtD(end)<=(srtD(1)+srtD(2)))
+                if abs(srtD(1) + srtD(2) - srtD(end)) < 1e-5  % if the triangle inequality is violeted but very little
+                    d(idxsD(end)) = srtD(1) + srtD(2);
+                else
+                    error('venn:triangleInequality', 'Triangle inequality not satisfied')
+                end
+            end
+            %Guess the initial position of the third circle using the law of cosines
+            alpha = acos( (d(1)^2 + d(2)^2 - d(3)^2)  / (2 * d(1) * d(2)) );
+            x(3) = d(2)*cos(alpha);
+            y(3) = d(2)*sin(alpha);
+            %Each pair-wise intersection fixes the distance between each pair
+            %of circles, so technically there are no degrees of freedom left in
+            %which to adjust the three-circle intersection. We can either try
+            %moving the third circle around to minimize the total error, or
+            %apply Chow-Rodgers 
+
+            switch vennOpts.ErrMinMode
+                case 'TotalError'
+                    %Minimize total intersection area error by moving the third circle
+                    pos = fminsearch(@threeCircleAreaError, [x(3) y(3)], fminOpts(2));
+                    x(3) = pos(1);
+                    y(3) = pos(2);
+                case 'ChowRodgers'
+                    %note that doChowRodgersSearch updates x and y in this
+                    %workspace as a nested fcn
+                    doChowRodgersSearch;
+            end
+            %Make sure everything is 'up to date' after optimization
+            update3CircleData;
+        end   
     end
     
     %Are we supposed to plot?
@@ -222,12 +229,14 @@ function varargout = myvenn (normalization, colors, varargin)
     %Needed for output structure 
     nOut = nargout;
     if (nOut==1 && ~vennOpts.Plot) || nOut==2
-        if nCirc == 2
-            %Need to calculate new areas
-            A = A0; %Areas never change for 2-circle venn
-            Z = calcZoneAreas(2, A, I);
-            zoneCentroids = zoneCentroids2(d, r, Z);
-        else
+        if nCirc == 1
+            zoneCentroids = zoneCentroids1(x, y, Z);
+        elseif nCirc == 2
+                %Need to calculate new areas
+                A = A0; %Areas never change for 2-circle venn
+                Z = calcZoneAreas(2, A, I);
+                zoneCentroids = zoneCentroids2(d, r, Z);
+        elseif nCirc == 3
             zoneCentroids = zoneCentroids3(x, y, d, r, Z);
         end
     end
@@ -561,7 +570,9 @@ function z = calcZoneAreas(nCircles, a, i)
     
     %Uses simple set addition and subtraction to calculate the zone areas
     %with circle areas a and intersection areas i
-    if nCircles==2
+    if nCircles==1
+        z = [a(1)];
+    elseif nCircles==2
         %a = [A1 A2]
         %i = I12
         %z = [A1-I12, A2-I12, I12]
@@ -617,6 +628,9 @@ function [Cx, Cy, aiz] = centroid2CI (x, y, r)
     Cy = Cx.*sin(theta) + y(:,1);
     Cx = Cx.*cos(theta) + x(:,1);
     
+end
+function centroidPos = zoneCentroids1 (x, y, r, Z)
+    centroidPos = zeros(1, 2);
 end
 function centroidPos = zoneCentroids2 (d, r, Z)
     

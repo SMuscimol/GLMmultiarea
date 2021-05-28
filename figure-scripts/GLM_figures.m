@@ -2,6 +2,8 @@
 %% load summarized data
 load('GLM.mat'); % assumes that the file is in the same directory
 %% definitions
+savefigs = false;
+
 allResultsE = GLM.allResultsE;
 allResultsN = GLM.allResultsN;
 fitParams = GLM.fitParams;
@@ -19,6 +21,9 @@ colorLick = [0.1,0.1,0.1];
 
 thRS = 0.34;
 thFS = 0.26;
+minMI = 0;
+pMax = 0.05;
+nType = 'RS';
 
 tRange = 0.05:0.1:3.95; % for histogram plots
 
@@ -27,10 +32,8 @@ timeBin = 0.1; % binning of GLM fit
 BASEFIGDIR = '../fig/';  %% adapt to your needs
 
 %% discarded neurons
-minMI = 0.;
-nType = 'RS';
-resultsDE.Neurons = filterneurons(allResultsE.Neurons, @(n) n.MI <= minMI);
-resultsDN.Neurons = filterneurons(allResultsN.Neurons, @(n) n.MI <= minMI);
+resultsDE.Neurons = filterneurons(allResultsE.Neurons, @(n) n.MI <= minMI | isinf(n.MI) | isnan(n.MI));  % remove nans and infs
+resultsDN.Neurons = filterneurons(allResultsN.Neurons, @(n) n.MI <= minMI | isinf(n.MI) | isnan(n.MI));
 resultsDE.allNeurons = allResultsE.Neurons;
 resultsDN.allNeurons = allResultsN.Neurons;
 if strcmp(nType,'RS')
@@ -56,6 +59,7 @@ end
 
 [~, pDiscardedTot] = prop_test([length(resultsDE.Neurons), length(resultsDN.Neurons)], ...
             [length(resultsDE.allNeurons), length(resultsDN.allNeurons)], false);
+figure();
 b = bar(ls);
 b(2).FaceColor = colorExpert;
 b(1).FaceColor = colorNovice;
@@ -65,16 +69,15 @@ ylabel({'fraction of', 'discarded neurons'});
 set(gca, 'box','off');
 set(gcf, 'Units', 'Inches', 'Position', [0, 0, 2.5, 1.], 'PaperUnits', 'Inches', 'PaperSize', [2.5,1.]);
 
-%% Plot individual regressor modulation across areas (Fig 5C)
-pMax = 0.05;
-nTypes = {'RS'}; % set to nTypes = {'All', 'RS', 'FS'} to produce plots also for fast-spiking neurons.
-
-filterVar = 'MI';
-if strcmp(filterVar,'cvRsq')
-    filterValue = 0.01;
-elseif strcmp(filterVar,'MI')
-    filterValue = 0.;
+if savefigs
+    figname = strcat('fraction_discarded_minMI', num2str(minMI));
+    savefig(strcat(BASEFIGDIR,figname,'.fig'));
+    saveas(gcf,strcat(BASEFIGDIR, figname, '.svg'))
 end
+    
+
+%% Plot individual regressor modulation across areas (Fig 5C)
+nTypes = {'RS'}; % set to nTypes = {'All', 'RS', 'FS'} to produce plots also for fast-spiking neurons.
 
 for nT=1:length(nTypes)
     nType = nTypes{nT};
@@ -85,27 +88,27 @@ for nT=1:length(nTypes)
 
     for a=1:length(areas)
             if strcmp(nType, 'All')
-                nrnsE = filterneurons(allResultsE.Neurons, @(n) logical(strcmp(n.area, areas{a}) .* (n.(filterVar) > filterValue) ) );
+                nrnsE = filterneurons(allResultsE.Neurons, @(n) logical(strcmp(n.area, areas{a}) & (n.MI > minMI) & ~isinf(n.MI) & ~isnan(n.MI)));
                 fractExpert(a,:) = getfractionmodulated(nrnsE, fitOptions, pMax);
-                nrnsN = filterneurons(allResultsN.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.(filterVar) > filterValue) ) );
+                nrnsN = filterneurons(allResultsN.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.MI > minMI) & ~isinf(n.MI) & ~isnan(n.MI)) );
                 fractNovice(a,:) = getfractionmodulated(nrnsN, fitOptions, pMax);
                 for r=1:length(fitOptions.toRemove)
                     [~, pFracs(a,r)] = prop_test([length(nrnsE), length(nrnsN)] .* [fractExpert(a,r),fractNovice(a,r)], ...
             [length(nrnsE), length(nrnsN)], false);
                 end
             elseif strcmp(nType,'RS')
-                nrnsE = filterneurons(allResultsE.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.PeakToBaseline > thRS) * (n.(filterVar) > filterValue) ) );
+                nrnsE = filterneurons(allResultsE.Neurons, @(n) logical(strcmp(n.area, areas{a}) & (n.PeakToBaseline > thRS) & (n.MI > minMI) & ~isinf(n.MI) & ~isnan(n.MI) ) );
                 fractExpert(a,:) = getfractionmodulated(nrnsE, fitOptions, pMax);
-                nrnsN = filterneurons(allResultsN.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.PeakToBaseline > thRS) * (n.(filterVar) > filterValue) ) );
+                nrnsN = filterneurons(allResultsN.Neurons, @(n) logical(strcmp(n.area, areas{a}) & (n.PeakToBaseline > thRS) & (n.MI > minMI) & ~isinf(n.MI) & ~isnan(n.MI) ) );
                 fractNovice(a,:) = getfractionmodulated(nrnsN, fitOptions, pMax);
                 for r=1:length(fitOptions.toRemove)
                     [~, pFracs(a,r)] = prop_test([length(nrnsE), length(nrnsN)] .* [fractExpert(a,r),fractNovice(a,r)], ...
             [length(nrnsE), length(nrnsN)], false);
                 end
             elseif strcmp(nType,'FS')
-                nrnsE = filterneurons(allResultsE.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.PeakToBaseline < thFS) * (n.(filterVar) > filterValue) ) );
+                nrnsE = filterneurons(allResultsE.Neurons, @(n) logical(strcmp(n.area, areas{a}) & (n.PeakToBaseline < thFS) & (n.MI > minMI) & ~isinf(n.MI) & ~isnan(n.MI)) );
                 fractExpert(a,:) = getfractionmodulated(nrnsE, fitOptions, pMax);
-                nrnsN = filterneurons(allResultsN.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.PeakToBaseline < thFS) * (n.(filterVar) > filterValue) ) );
+                nrnsN = filterneurons(allResultsN.Neurons, @(n) logical(strcmp(n.area, areas{a}) & (n.PeakToBaseline < thFS) & (n.MI > minMI) & ~isinf(n.MI) & ~isnan(n.MI)) );
                 fractNovice(a,:) = getfractionmodulated(nrnsN, fitOptions, pMax);
                 for r=1:length(fitOptions.toRemove)
                     [~, pFracs(a,r)] = prop_test([length(nrnsE), length(nrnsN)] .* [fractExpert(a,r),fractNovice(a,r)], ...
@@ -115,7 +118,11 @@ for nT=1:length(nTypes)
     end
 
     for r=1:length(fitOptions.toRemove)
-        figure('Visible','on');
+        if savefigs
+            figure('Visible','off');
+        else
+            figure('Visible', 'on');
+        end
 
         % expert and novice
         b = bar(cat(2,fractNovice(:,r),fractExpert(:,r)));
@@ -143,9 +150,14 @@ for nT=1:length(nTypes)
 
         set(gca, 'box','off');
         set(gcf, 'Units', 'Inches', 'Position', [0, 0, 2.5, 1.], 'PaperUnits', 'Inches', 'PaperSize', [2.5,1.]);
+        if savefigs
+            figname = strcat('fraction_modulated_', fitOptions.toRemove{r}{:}, '_minMI', num2str(minMI));
+            savefig(strcat(BASEFIGDIR,figname, '.fig'));
+            saveas(gcf,strcat(BASEFIGDIR, figname, '.svg'))
+            close 
+        end
     end
 end
-
 %% Table with all areas/regressors
 dx = 0.0175;
 dy = 0.04;
@@ -156,42 +168,35 @@ fractNovice= zeros(length(areas),length(fitOptions.toRemove));
 pFracs =  zeros(length(areas),length(fitOptions.toRemove));
 
 nTypes = {'RS'}; % set to {'RS','FS','All'} to produce tables also for fast-spiking neurons
-pMax = 0.05;
-minRsq = 0.01;
 
 for nT=1:length(nTypes)
     nType = nTypes{nT};
     %filtering
     filterVar = 'MI'; % set to 'cvRsq' to filter neurons that have CV-R-squared bigger than 0.01
-    if strcmp(filterVar,'MI')
-        filterValue = 0.;
-    elseif strcmp(filterVar,'cvRsq')
-        filterValue = 0.01;
-    end
 
     for a=1:length(areas)
             if strcmp(nType, 'All')
-                nrnsE = filterneurons(allResultsE.Neurons, @(n) logical(strcmp(n.area, areas{a}) .* (n.(filterVar) > filterValue) ) );
+                nrnsE = filterneurons(allResultsE.Neurons, @(n) logical(strcmp(n.area, areas{a}) & (n.MI > minMI) & ~isinf(n.MI) & ~isnan(n.MI) ) );
                 fractExpert(a,:) = getfractionmodulated(nrnsE, fitOptions, pMax);
-                nrnsN = filterneurons(allResultsN.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.(filterVar) > filterValue) ) );
+                nrnsN = filterneurons(allResultsN.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.MI > minMI) ) );
                 fractNovice(a,:) = getfractionmodulated(nrnsN, fitOptions, pMax);
                 for r=1:length(fitOptions.toRemove)
                     [~, pFracs(a,r)] = prop_test([length(nrnsE), length(nrnsN)] .* [fractExpert(a,r),fractNovice(a,r)], ...
             [length(nrnsE), length(nrnsN)], false);
                 end
             elseif strcmp(nType,'RS')
-                nrnsE = filterneurons(allResultsE.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.PeakToBaseline > thRS) * (n.(filterVar) > filterValue) ) );
+                nrnsE = filterneurons(allResultsE.Neurons, @(n) logical(strcmp(n.area, areas{a}) & (n.MI > minMI) & ~isinf(n.MI) & ~isnan(n.MI)) );
                 fractExpert(a,:) = getfractionmodulated(nrnsE, fitOptions, pMax);
-                nrnsN = filterneurons(allResultsN.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.PeakToBaseline > thRS) * (n.(filterVar) > filterValue) ) );
+                nrnsN = filterneurons(allResultsN.Neurons, @(n) logical(strcmp(n.area, areas{a}) & (n.MI > minMI) & ~isinf(n.MI) & ~isnan(n.MI)) );
                 fractNovice(a,:) = getfractionmodulated(nrnsN, fitOptions, pMax);
                 for r=1:length(fitOptions.toRemove)
                     [~, pFracs(a,r)] = prop_test([length(nrnsE), length(nrnsN)] .* [fractExpert(a,r),fractNovice(a,r)], ...
             [length(nrnsE), length(nrnsN)], false);
                 end
             elseif strcmp(nType,'FS')
-                nrnsE = filterneurons(allResultsE.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.PeakToBaseline < thFS) * (n.(filterVar) > filterValue) ) );
+                nrnsE = filterneurons(allResultsE.Neurons, @(n) logical(strcmp(n.area, areas{a}) & (n.MI > minMI) & ~isinf(n.MI) & ~isnan(n.MI)) );
                 fractExpert(a,:) = getfractionmodulated(nrnsE, fitOptions, pMax);
-                nrnsN = filterneurons(allResultsN.Neurons, @(n) logical(strcmp(n.area, areas{a}) * (n.PeakToBaseline < thFS) * (n.(filterVar) > filterValue) ) );
+                nrnsN = filterneurons(allResultsN.Neurons, @(n) logical(strcmp(n.area, areas{a}) & (n.MI > minMI) & ~isinf(n.MI) & ~isnan(n.MI)) );
                 fractNovice(a,:) = getfractionmodulated(nrnsN, fitOptions, pMax);
                 for r=1:length(fitOptions.toRemove)
                     [~, pFracs(a,r)] = prop_test([length(nrnsE), length(nrnsN)] .* [fractExpert(a,r),fractNovice(a,r)], ...
@@ -234,6 +239,33 @@ for nT=1:length(nTypes)
     set(gcf, 'Units', 'Inches', 'Position', [0, 0, 14, 8.0], 'PaperUnits', 'Inches', 'PaperSize', [14., 8.0]);
 end
 
+%% write table with fractions
+Texp = table;
+for a=1:length(areas)
+    x_T = table(fractExpert(a, :)');
+    x_T.Properties.VariableNames = {areas{a}};
+    Texp = [Texp, x_T];  % add column
+end
+
+Tnov = table;
+for a=1:length(areas)
+    x_T = table(fractNovice(a, :)');
+    x_T.Properties.VariableNames = {areas{a}};
+    Tnov= [Tnov, x_T];  % add column
+end
+
+Tp = table;
+for a=1:length(areas)
+    x_T = table(pFracs(a, :)');
+    x_T.Properties.VariableNames = {areas{a}};
+    Tp= [Tp, x_T];  % add column
+end
+
+% filename = strcat('avWeights_', group, '.xlsx');
+writetable(Texp, 'table_fract_expert.xlsx')  % save table
+writetable(Tnov, 'table_fract_novice.xlsx')  % save table
+writetable(Tp, 'table_pvalues.xlsx')  % save table
+
 %% Venn diagrams (Fig. 5D)
 % areas/groups for which the intersection between populations of modulated
 % neurons was empty return warning due to the implementation of the Venn
@@ -241,7 +273,6 @@ end
 % Hippocampus/Novice is the only diagram that will not be plotted because
 % it has only few neurons sensitive to whisker onset and venn.m does not
 % allow to plot only one diagram.
-savefigs = false;
 str1= '#fba822ff';
 str2= '#785734ff';
 str3 = '#2627f9ff';
@@ -250,14 +281,12 @@ color2= sscanf(str2(2:end),'%2x%2x%2x',[1 3])/255;
 color3= sscanf(str3(2:end),'%2x%2x%2x',[1 3])/255;
 cs = {color1, color2, color3};
 
-filterVar = 'MI';  % cvR-sq was used for the paper figure
-if strcmp(filterVar,'cvRsq')
-    filterValue = 0.01;
-elseif strcmp(filterVar,'MI')
-    filterValue = 0.;
-end
-
 clc
+if savefigs
+    visible = 'off';
+else
+    visible = 'on';
+end
 for a = 1:length(areas)
     
     area = areas{a};
@@ -267,10 +296,10 @@ for a = 1:length(areas)
             for normalize=[true]
                 if g==1
                     gr = 'Expert';
-                    results.Neurons = filterneurons(allResultsE.Neurons, @(n) boolean(strcmp(n.area,area)*(n.(filterVar)>filterValue)) );
+                    results.Neurons = filterneurons(allResultsE.Neurons, @(n) strcmp(n.area, areas{a}) & (n.MI > minMI) & ~isinf(n.MI) & ~isnan(n.MI));
                 elseif g==2
                     gr = 'Novice';
-                    results.Neurons = filterneurons(allResultsN.Neurons, @(n) boolean(strcmp(n.area,area)*(n.(filterVar)>filterValue)) );
+                    results.Neurons = filterneurons(allResultsN.Neurons, @(n) strcmp(n.area, areas{a}) & (n.MI > minMI) & ~isinf(n.MI) & ~isnan(n.MI));
                 end
 
                 if strcmp(nt{1}, 'RS')
@@ -288,10 +317,10 @@ for a = 1:length(areas)
                 %%% WONSET, WDELAY AND LICKONSETPRE %%%
                 try
                     if normalize==false
-                        fig = figure('Units','inches','Position',[0,0,4,4]);
+                        fig = figure('Units','inches','Position',[0,0,4,4], 'Visible', visible);
                         ax = axes('Units','inches','Position',[0. 0. 4. 4.]);
                     else
-                        fig = figure('Units','inches','Position',[0,0,50/sqrt(totN),50/sqrt(totN)]);
+                        fig = figure('Units','inches','Position',[0,0,50/sqrt(totN),50/sqrt(totN)], 'Visible', visible);
                         ax = axes('Units','inches','Position',[0. 0. 50/sqrt(totN), 50/sqrt(totN)]);
                     end
                     axis equal
@@ -366,24 +395,17 @@ for a = 1:length(areas)
                 mkdir(figDir);
                 figDir = strcat(figDir,'/',nt{1},'/');
                 mkdir(figDir);
-                figname = strcat('venn_',area,'_',nt{1}, '_', gr, 'filtby',filterVar);
-                savefig(strcat(figDir,figname));
+                figname = strcat('venn_',area,'_',nt{1}, '_', gr, '_minMI', num2str(minMI));
+                savefig(strcat(figDir,figname, '.fig'));
                 saveas(gcf,strcat(figDir, figname, '.svg'))
+                close all
             end
-            close all
         end
     end
 end
 
 %% MI median for all areas - Figure S5E
 nTypes = {'RS'}; % set to {'All','RS','FS'} to plot for all neuron types
-
-filterVar = 'MI'; % set to 'cvRsq' to discard neurons whose cv-R-squared is smaller than 0.01
-if strcmp(filterVar,'cvRsq')
-    filterValue = 0.01;
-elseif strcmp(filterVar,'MI')
-    filterValue = 0.;
-end
 
 for nT=1:numel(nTypes)
     nType = nTypes{nT};
@@ -392,19 +414,19 @@ for nT=1:numel(nTypes)
     for a =1:length(areas)
         area = areas{a};
         if strcmp(nType,'All')
-            results.Neurons = filterneurons(allResultsE.Neurons, @(n) boolean(strcmp(n.area,area)*(n.(filterVar)>filterValue) ) );
+            results.Neurons = filterneurons(allResultsE.Neurons, @(n) strcmp(n.area, areas{a}) & (n.MI > minMI) & ~isinf(n.MI) & ~isnan(n.MI));
             MI.(area) = [results.Neurons.MI]';
-            results.Neurons = filterneurons(allResultsN.Neurons, @(n) boolean(strcmp(n.area,area)*(n.(filterVar)>filterValue)) );
+            results.Neurons = filterneurons(allResultsN.Neurons, @(n) strcmp(n.area, areas{a}) & (n.MI > minMI) & ~isinf(n.MI) & ~isnan(n.MI));
             MINovice.(area) = [results.Neurons.MI]';
         elseif strcmp(nType,'RS')
-            results.Neurons = filterneurons(allResultsE.Neurons, @(n) boolean(strcmp(n.area,area)*(n.(filterVar)>filterValue)*(n.PeakToBaseline>thRS)) );
+            results.Neurons = filterneurons(allResultsE.Neurons, @(n) strcmp(n.area, areas{a}) & (n.MI > minMI) & ~isinf(n.MI) & ~isnan(n.MI) & (n.PeakToBaseline>thRS));
             MI.(area) = [results.Neurons.MI]';
-            results.Neurons = filterneurons(allResultsN.Neurons, @(n) boolean(strcmp(n.area,area)*(n.(filterVar)>filterValue)*(n.PeakToBaseline>thRS)) );
+            results.Neurons = filterneurons(allResultsN.Neurons, @(n) strcmp(n.area, areas{a}) & (n.MI > minMI) & ~isinf(n.MI) & ~isnan(n.MI) & (n.PeakToBaseline>thRS));
             MINovice.(area) = [results.Neurons.MI]';
         elseif strcmp(nType, 'FS')
-            results.Neurons = filterneurons(allResultsE.Neurons, @(n) boolean(strcmp(n.area,area)*(n.(filterVar)>filterValue)*(n.PeakToBaseline<thFS)) );
+            results.Neurons = filterneurons(allResultsE.Neurons, @(n) boolean(strcmp(n.area, areas{a}) & (n.MI > minMI) & ~isinf(n.MI) & ~isnan(n.MI) & (n.PeakToBaseline<thFS)) );
             MI.(area) = [results.Neurons.MI]';
-            results.Neurons = filterneurons(allResultsN.Neurons, @(n) boolean(strcmp(n.area,area)*(n.(filterVar)>filterValue)*(n.PeakToBaseline<thFS)) );
+            results.Neurons = filterneurons(allResultsN.Neurons, @(n) boolean(strcmp(n.area, areas{a}) & (n.MI > minMI) & ~isinf(n.MI) & ~isnan(n.MI) & (n.PeakToBaseline<thFS)) );
             MINovice.(area) = [results.Neurons.MI]';
         end
     end
@@ -414,7 +436,11 @@ for nT=1:numel(nTypes)
         tmp(a,1) = median(MINovice.(areas{a}));
         tmp(a,2) = nanmedian(MI.(areas{a}));
     end
-    figure('Visible','on')
+    if savefigs
+        figure('Visible','off')
+    else
+        figure()
+    end
 
     % expert and novice %
     b = bar(tmp, 0.75);
@@ -425,14 +451,23 @@ for nT=1:numel(nTypes)
     xtickangle(45);
     ylabel({'median M.I.', '[bits per spike]'})
 
-    set(gcf, 'Units', 'Inches', 'Position', [0, 0, 2.5, 1.], 'PaperUnits', 'Inches', 'PaperSize', [2.5, 1.]);
     set(gca, 'box', 'off')
+    set(gcf, 'Units', 'Inches', 'Position', [0, 0, 2.5, 1.], 'PaperUnits', 'Inches', 'PaperSize', [2.5, 1.]);
+
+    if savefigs
+        figDir = BASEFIGDIR;
+        figname = strcat('MImedian_', 'minMI', num2str(minMI));
+        savefig(strcat(figDir,figname, '.fig'));
+        saveas(gcf,strcat(figDir, figname, '.svg'))
+        close
+    end
 end
 
 %% Quiet / Active model and data histograms (Fig. 5E)
 % This analysis can be plotted only for regular-spiking neurons %
 gr = 'Expert';
 for a=1:numel(areas)
+ %for a=1:1
     area = areas{a};
     if strcmp(gr, 'Expert')
         PSTH_full = GLM.QA.(area).PSTH_fullE;
@@ -456,11 +491,18 @@ for a=1:numel(areas)
     tmp = '#47b6ffff';
     c = sscanf(tmp(2:end),'%2x%2x%2x',[1 3])/255; 
     plot(tRange, PSTH_Qdata, 'LineStyle','--','DisplayName','Data-quiet','LineWidth',2,'Color',c)
-    legend();
+    %legend();
     xlabel('t [s]')
     xlim([0,4]);
     set(gcf, 'Units', 'Inches', 'Position', [0, 0, 2.242, 1.129], 'PaperUnits', 'Inches', 'PaperSize', [2.242,1.129]);
-
+    
+    if savefigs
+        figDir = BASEFIGDIR;
+        figname = strcat('QA_',gr, '_', area,'_minMI', num2str(minMI));
+        savefig(strcat(figDir,figname, '.fig'));
+        saveas(gcf,strcat(figDir, figname, '.svg'))
+        close
+    end
 end
 
 %% Single neuron panel - PSTHs and betas - Figure S5C %%
@@ -498,7 +540,7 @@ ylabel('\Delta rate')
 set(gca,'Box','off')
 % bar inset
 axes('Position',[0.8 .8 .075 .075])
-%b = bar([(n.psWaldAv.jawSpeed.data<pMax) * n.ws.jawSpeed.data; ...
+%b = bar([(n.psWaldAv.jawSpeed.data<pMax) * n.ws.jawSpneed.data; ...
 %  (n.psWaldAv.whiskSpeed.data<pMax) *n.ws.whiskSpeed.data ; ...
 %  (n.psWaldAv.tongueSpeed.data<pMax) * n.ws.tongueSpeed.data ]);
 m = exp(n.wPlain(1))/timeBin;
@@ -542,7 +584,7 @@ dm = results.Sessions(n.sIndex).dm;
 
 ti = 0;
 nTrials = 3;
-
+figure();
 for t=1:nTrials
     k = t;
     tmp = find(n.RsqST{k} > prctile(n.RsqST{k},50));
@@ -562,16 +604,13 @@ set(gcf, 'Units', 'Inches', 'Position', [0, 0, 2.756, 1.122], 'PaperUnits', 'Inc
 
 %% generating heatmap of figure 5C %%
 % filter neurons first 
-pMax = 0.05;
-minMI = 0.;
-
 group = 'Expert';
 nType = 'RS';
 
 if strcmp(group, 'Expert')
-    results.Neurons = filterneurons(allResultsE.Neurons, @(n) n.MI >= minMI);
+    results.Neurons = filterneurons(allResultsE.Neurons, @(n) (n.MI > minMI) & ~isinf(n.MI) & ~isnan(n.MI));
 elseif strcmp(group, 'Novice')
-    results.Neurons = filterneurons(allResultsN.Neurons, @(n) n.MI >= minMI);
+    results.Neurons = filterneurons(allResultsN.Neurons, @(n) (n.MI > minMI) & ~isinf(n.MI) & ~isnan(n.MI));
 end
 
 if strcmp(nType, 'RS')
