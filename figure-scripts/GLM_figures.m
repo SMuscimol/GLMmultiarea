@@ -2,7 +2,7 @@
 %% load summarized data
 load('GLM.mat'); % assumes that the file is in the same directory
 %% definitions
-savefigs = false;
+savefigs = false;  % whether to save the figure files
 
 allResultsE = GLM.allResultsE;
 allResultsN = GLM.allResultsN;
@@ -31,7 +31,7 @@ timeBin = 0.1; % binning of GLM fit
 
 BASEFIGDIR = '../fig/';  %% adapt to your needs
 
-%% discarded neurons
+%% Fraction of discarded neurons (Fig. S7C, top)
 resultsDE.Neurons = filterneurons(allResultsE.Neurons, @(n) n.MI <= minMI | isinf(n.MI) | isnan(n.MI));  % remove nans and infs
 resultsDN.Neurons = filterneurons(allResultsN.Neurons, @(n) n.MI <= minMI | isinf(n.MI) | isnan(n.MI));
 resultsDE.allNeurons = allResultsE.Neurons;
@@ -76,7 +76,7 @@ if savefigs
 end
     
 
-%% Plot individual regressor modulation across areas (Fig 5C)
+%% Plot individual regressor modulation across areas (Fig 6D)
 nTypes = {'RS'}; % set to nTypes = {'All', 'RS', 'FS'} to produce plots also for fast-spiking neurons.
 
 for nT=1:length(nTypes)
@@ -239,7 +239,7 @@ for nT=1:length(nTypes)
     set(gcf, 'Units', 'Inches', 'Position', [0, 0, 14, 8.0], 'PaperUnits', 'Inches', 'PaperSize', [14., 8.0]);
 end
 
-%% write table with fractions
+%% write table with fractions, then used to produce the supplementary table
 Texp = table;
 for a=1:length(areas)
     x_T = table(fractExpert(a, :)');
@@ -266,7 +266,7 @@ writetable(Texp, 'table_fract_expert.xlsx')  % save table
 writetable(Tnov, 'table_fract_novice.xlsx')  % save table
 writetable(Tp, 'table_pvalues.xlsx')  % save table
 
-%% Venn diagrams (Fig. 5D)
+%% Venn diagrams (Fig. 6E)
 % areas/groups for which the intersection between populations of modulated
 % neurons was empty return warning due to the implementation of the Venn
 % diagram script (venn.m). However, their correctnedd can be checked manually. 
@@ -404,7 +404,7 @@ for a = 1:length(areas)
     end
 end
 
-%% MI median for all areas - Figure S5E
+%% MI median for all areas - Figure S7C, bottom
 nTypes = {'RS'}; % set to {'All','RS','FS'} to plot for all neuron types
 
 for nT=1:numel(nTypes)
@@ -463,7 +463,7 @@ for nT=1:numel(nTypes)
     end
 end
 
-%% Quiet / Active model and data histograms (Fig. 5E)
+%% Quiet / Active model and data histograms (Fig. 6F and Fig.S7F)
 % This analysis can be plotted only for regular-spiking neurons %
 gr = 'Expert';
 for a=1:numel(areas)
@@ -505,7 +505,7 @@ for a=1:numel(areas)
     end
 end
 
-%% Single neuron panel - PSTHs and betas - Figure S5C %%
+%% Single neuron panel - PSTHs and betas - Figure S7B %%
 s = 10; nn=35; % session / neuron
 area = 'ALM';
 results.Neurons = filterneurons(allResultsE.Neurons, @(n) strcmp(n.area, area) );
@@ -569,7 +569,7 @@ set(gcf, 'Units', 'Inches', 'Position', [0, 0, 3, 4], 'PaperUnits', 'Inches', 'P
 
 load('GLMfulloutput.mat'); % assumes that the file is in the directory (might take a while), please ensure that you have enough RAM.
 
-%% Trial predictions - Figure S5C
+%% Trial predictions - Figure S7B
 
 %%% PARAMETER TO BE SET BY THE USER - the defaults correspond to the one in
 %%% figure ... ... , but with different semi-randomly chosen trials.
@@ -602,7 +602,7 @@ end
 
 set(gcf, 'Units', 'Inches', 'Position', [0, 0, 2.756, 1.122], 'PaperUnits', 'Inches', 'PaperSize', [2.756,1.122]);
 
-%% generating heatmap of figure 5C %%
+%% generating heatmap of figure S7E %%
 % filter neurons first 
 group = 'Expert';
 nType = 'RS';
